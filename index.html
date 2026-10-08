@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arztrechnungen</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Arztrechnungen</h1>
+      <span class="sub">DeBeKa &amp; Beihilfe</span>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btnNew">＋ Rechnung scannen</button>
+      <button class="btn" id="btnManual">Manuell erfassen</button>
+      <div class="menu">
+        <button class="btn" id="btnMenu" aria-haspopup="true">⋯ Mehr</button>
+        <div class="menu-list" id="menuList" hidden>
+          <button data-act="csv">Export als CSV (Excel)</button>
+          <button data-act="backup">Datensicherung speichern</button>
+          <button data-act="restore">Datensicherung laden</button>
+          <button data-act="settings">Einstellungen</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary" id="summary"></section>
+
+    <section class="filters">
+      <input type="search" id="search" placeholder="Suchen: Arzt, Diagnose, Betrag, Datum, Rechnungsnr., Volltext …" autocomplete="off">
+      <div class="filter-row">
+        <label>Datum nach
+          <select id="fBasis">
+            <option value="rechnungsdatum">Rechnungsdatum</option>
+            <option value="behandlungsdatum">Behandlungsdatum</option>
+            <option value="faelligkeit">Fälligkeit</option>
+          </select>
+        </label>
+        <label>Jahr <select id="fYear"><option value="">Alle</option></select></label>
+        <label>Monat
+          <select id="fMonth">
+            <option value="">Alle</option>
+            <option value="1">Januar</option><option value="2">Februar</option><option value="3">März</option>
+            <option value="4">April</option><option value="5">Mai</option><option value="6">Juni</option>
+            <option value="7">Juli</option><option value="8">August</option><option value="9">September</option>
+            <option value="10">Oktober</option><option value="11">November</option><option value="12">Dezember</option>
+          </select>
+        </label>
+        <label>Rechnungssteller <select id="fArzt"><option value="">Alle</option></select></label>
+        <label>Status
+          <select id="fStatus">
+            <option value="">Alle</option>
+            <option value="open">Mit offenen Punkten</option>
+            <option value="done">Komplett erledigt</option>
+            <option value="overdue">Zahlung überfällig</option>
+            <option value="not:bezahlt">Noch nicht überwiesen</option>
+            <option value="not:debekaGesendet">Noch nicht an DeBeKa geschickt</option>
+            <option value="not:beihilfeGesendet">Noch nicht an Beihilfe geschickt</option>
+            <option value="not:debekaErstattet">Erstattung DeBeKa ausstehend</option>
+            <option value="not:beihilfeErstattet">Erstattung Beihilfe ausstehend</option>
+          </select>
+        </label>
+        <label>Sortierung
+          <select id="fSort">
+            <option value="rechnungsdatum:desc">Rechnungsdatum (neueste)</option>
+            <option value="rechnungsdatum:asc">Rechnungsdatum (älteste)</option>
+            <option value="faelligkeit:asc">Fälligkeit (nächste zuerst)</option>
+            <option value="betrag:desc">Betrag (höchster)</option>
+            <option value="arzt:asc">Rechnungssteller (A–Z)</option>
+          </select>
+        </label>
+        <button class="btn small" id="btnReset">Filter zurücksetzen</button>
+      </div>
+    </section>
+
+    <section id="list" class="list"></section>
+  </main>
+
+  <!-- Erfassen / Bearbeiten -->
+  <dialog id="dlgEdit" class="dlg wide">
+    <form method="dialog" id="formEdit">
+      <div class="dlg-head">
+        <h2 id="editTitle">Rechnung erfassen</h2>
+        <button type="button" class="icon-btn" data-close>✕</button>
+      </div>
+      <div class="dlg-body edit-grid">
+        <div class="scan-col">
+          <div class="dropzone" id="dropzone">
+            <p><strong>Rechnung hierher ziehen</strong><br>oder</p>
+            <div class="row">
+              <label class="btn primary">Datei wählen (Bild/PDF)
+                <input type="file" id="fileInput" accept="image/*,application/pdf" multiple hidden>
+              </label>
+              <label class="btn">📷 Kamera
+                <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+              </label>
+            </div>
+            <p class="hint">Mehrseitige Rechnungen: alle Seiten auswählen.</p>
+          </div>
+          <div id="ocrStatus" class="ocr-status" hidden>
+            <div class="bar"><div id="ocrBar"></div></div>
+            <span id="ocrText">Texterkennung läuft …</span>
+          </div>
+          <div id="ocrNotes" class="ocr-notes" hidden></div>
+          <div class="thumbs" id="thumbs"></div>
+        </div>
+
+        <div class="form-col">
+          <div class="grid2">
+            <label class="full">Rechnungssteller / Arzt
+              <input name="arzt" list="arztList" placeholder="z. B. Dr. med. Müller, Orthopädie">
+              <datalist id="arztList"></datalist>
+            </label>
+            <label class="full">Behandlungsgrund / Diagnose
+              <textarea name="behandlungsgrund" rows="2"></textarea>
+            </label>
+            <label>Rechnungsbetrag (€)
+              <input name="betrag" inputmode="decimal" placeholder="0,00" required>
+            </label>
+            <label>Rechnungsnummer
+              <input name="rechnungsnummer">
+            </label>
+            <label>Datum Rechnung
+              <input type="date" name="rechnungsdatum">
+            </label>
+            <label>Fällig am
+              <input type="date" name="faelligkeit">
+            </label>
+            <label>Datum Behandlung
+              <input type="date" name="behandlungsdatum">
+            </label>
+            <label>Anteil DeBeKa (%)
+              <input name="debekaProzent" type="number" min="0" max="100" step="0.1">
+            </label>
+          </div>
+
+          <div class="split" id="splitPreview"></div>
+
+          <fieldset class="status-set">
+            <legend>Bearbeitungsstand</legend>
+            <div id="statusEdit"></div>
+          </fieldset>
+
+          <div class="grid2">
+            <label>Tatsächlich erstattet DeBeKa (€)
+              <input name="erstattetDebeka" inputmode="decimal" placeholder="optional">
+            </label>
+            <label>Tatsächlich erstattet Beihilfe (€)
+              <input name="erstattetBeihilfe" inputmode="decimal" placeholder="optional">
+            </label>
+            <label class="full">Notiz
+              <textarea name="notiz" rows="2"></textarea>
+            </label>
+          </div>
+
+          <details class="ocr-raw">
+            <summary>Erkannter Text (Volltext)</summary>
+            <textarea name="ocrText" rows="8"></textarea>
+          </details>
+        </div>
+      </div>
+      <div class="dlg-foot">
+        <button type="button" class="btn danger" id="btnDelete" hidden>Löschen</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn" data-close>Abbrechen</button>
+        <button type="submit" class="btn primary" id="btnSave">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Einstellungen -->
+  <dialog id="dlgSettings" class="dlg">
+    <form method="dialog" id="formSettings">
+      <div class="dlg-head">
+        <h2>Einstellungen</h2>
+        <button type="button" class="icon-btn" data-close>✕</button>
+      </div>
+      <div class="dlg-body">
+        <label>Standard-Anteil DeBeKa (%)
+          <input name="debekaProzent" type="number" min="0" max="100" step="0.1">
+        </label>
+        <p class="hint">Den Rest (100 % − DeBeKa-Anteil) erstattet die Beihilfe. Der Wert kann bei jeder Rechnung einzeln angepasst werden.</p>
+        <label>Zahlungsziel, falls auf der Rechnung keins erkannt wird (Tage)
+          <input name="zahlungszielTage" type="number" min="0" max="120">
+        </label>
+        <label>Warnung vor Fälligkeit (Tage)
+          <input name="warnTage" type="number" min="0" max="60">
+        </label>
+      </div>
+      <div class="dlg-foot">
+        <span class="spacer"></span>
+        <button type="button" class="btn" data-close>Abbrechen</button>
+        <button type="submit" class="btn primary">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <input type="file" id="restoreInput" accept="application/json,.json" hidden>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="db.js"></script>
+  <script src="parser.js"></script>
+  <script src="ocr.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
