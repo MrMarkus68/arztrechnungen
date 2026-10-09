@@ -5,6 +5,7 @@ Arztrechnungen_*.csv
 *.jpg
 *.jpeg
 *.png
+!icons/*.png
 
 # Lokale Claude-Einstellungen
 .claude/settings.local.json

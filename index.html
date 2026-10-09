@@ -2,8 +2,16 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Arztrechnungen</title>
+  <meta name="theme-color" content="#1f6feb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Rechnungen">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -15,11 +23,12 @@
       <span class="sub">DeBeKa &amp; Beihilfe</span>
     </div>
     <div class="actions">
-      <button class="btn primary" id="btnNew">＋ Rechnung scannen</button>
-      <button class="btn" id="btnManual">Manuell erfassen</button>
+      <button class="btn primary desktop-only" id="btnNew">＋ Rechnung scannen</button>
+      <button class="btn desktop-only" id="btnManual">Manuell erfassen</button>
       <div class="menu">
-        <button class="btn" id="btnMenu" aria-haspopup="true">⋯ Mehr</button>
+        <button class="btn" id="btnMenu" aria-haspopup="true" aria-label="Mehr">⋯<span class="desktop-only">&nbsp;Mehr</span></button>
         <div class="menu-list" id="menuList" hidden>
+          <button data-act="manual" class="mobile-only">Manuell erfassen (ohne Scan)</button>
           <button data-act="csv">Export als CSV (Excel)</button>
           <button data-act="backup">Datensicherung speichern</button>
           <button data-act="restore">Datensicherung laden</button>
@@ -32,8 +41,11 @@
   <main>
     <section class="summary" id="summary"></section>
 
-    <section class="filters">
-      <input type="search" id="search" placeholder="Suchen: Arzt, Diagnose, Betrag, Datum, Rechnungsnr., Volltext …" autocomplete="off">
+    <section class="filters collapsed" id="filters">
+      <div class="search-row">
+        <input type="search" id="search" placeholder="Suchen: Arzt, Diagnose, Betrag, Datum …" autocomplete="off">
+        <button class="btn mobile-only" id="btnFilterToggle" type="button" aria-expanded="false">Filter<span class="count" id="filterCount" hidden></span></button>
+      </div>
       <div class="filter-row">
         <label>Datum nach
           <select id="fBasis">
@@ -82,6 +94,10 @@
     <section id="list" class="list"></section>
   </main>
 
+  <button class="fab mobile-only" id="fabScan" aria-label="Rechnung scannen">
+    <span aria-hidden="true">📷</span> Scannen
+  </button>
+
   <!-- Erfassen / Bearbeiten -->
   <dialog id="dlgEdit" class="dlg wide">
     <form method="dialog" id="formEdit">
@@ -92,13 +108,13 @@
       <div class="dlg-body edit-grid">
         <div class="scan-col">
           <div class="dropzone" id="dropzone">
-            <p><strong>Rechnung hierher ziehen</strong><br>oder</p>
+            <p class="desktop-only"><strong>Rechnung hierher ziehen</strong><br>oder</p>
             <div class="row">
-              <label class="btn primary">Datei wählen (Bild/PDF)
-                <input type="file" id="fileInput" accept="image/*,application/pdf" multiple hidden>
-              </label>
-              <label class="btn">📷 Kamera
+              <label class="btn cam-btn">📷 Foto aufnehmen
                 <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+              </label>
+              <label class="btn primary file-btn">📄 Datei/Bild wählen
+                <input type="file" id="fileInput" accept="image/*,application/pdf" multiple hidden>
               </label>
             </div>
             <p class="hint">Mehrseitige Rechnungen: alle Seiten auswählen.</p>

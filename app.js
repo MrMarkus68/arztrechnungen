@@ -129,6 +129,13 @@
     return html;
   }
 
+  function updateFilterCount() {
+    const n = ['#fYear', '#fMonth', '#fArzt', '#fStatus'].filter(s => $(s).value).length;
+    const el = $('#filterCount');
+    el.textContent = n;
+    el.hidden = !n;
+  }
+
   function refreshFilterOptions() {
     const basis = $('#fBasis').value;
     const years = [...new Set(invoices.map(i => (i[basis] || '').slice(0, 4)).filter(Boolean))].sort().reverse();
@@ -166,6 +173,7 @@
 
   function renderList() {
     refreshFilterOptions();
+    updateFilterCount();
     const list = filtered();
     renderSummary(list);
     const el = $('#list');
@@ -206,6 +214,7 @@
             ${inv.files?.length ? `<span>📎 ${inv.files.length}</span>` : ''}
             ${inv.notiz ? `<span>📝 ${highlight(inv.notiz)}</span>` : ''}
           </div>
+          <div class="parts mobile-only">DeBeKa ${eur.format(s.debeka)} · Beihilfe ${eur.format(s.beihilfe)}</div>
         </div>
         <div class="amount">
           <div class="total">${highlight(eur.format(inv.betrag || 0))}</div>
@@ -437,6 +446,11 @@
   // ---------- Ereignisse ----------
   $('#btnNew').addEventListener('click', () => openEditor(null, { scan: true }));
   $('#btnManual').addEventListener('click', () => openEditor(null));
+  $('#fabScan').addEventListener('click', () => openEditor(null, { scan: true }));
+  $('#btnFilterToggle').addEventListener('click', () => {
+    const collapsed = $('#filters').classList.toggle('collapsed');
+    $('#btnFilterToggle').setAttribute('aria-expanded', String(!collapsed));
+  });
 
   $('#list').addEventListener('click', e => {
     const t = e.target.closest('[data-edit]');
@@ -516,6 +530,7 @@
   document.addEventListener('click', () => { $('#menuList').hidden = true; });
   $('#menuList').addEventListener('click', e => {
     const act = e.target.dataset.act;
+    if (act === 'manual') openEditor(null);
     if (act === 'csv') exportCsv();
     if (act === 'backup') backup();
     if (act === 'restore') $('#restoreInput').click();

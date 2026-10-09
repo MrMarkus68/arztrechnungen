@@ -6,6 +6,15 @@ Lokale App zum Erfassen und Nachverfolgen privater Arztrechnungen.
 Doppelklick auf **`App starten.bat`** → der Browser öffnet `http://localhost:8765`.
 Das schwarze Fenster während der Nutzung offen lassen (schließen = App beenden).
 
+Online: **https://mrmarkus68.github.io/arztrechnungen/**
+
+## Auf dem Handy als App
+Link im Handy-Browser öffnen, dann
+- **Android (Chrome):** Menü ⋮ → *Zum Startbildschirm hinzufügen* bzw. *App installieren*
+- **iPhone (Safari):** Teilen-Symbol → *Zum Home-Bildschirm*
+
+Die App öffnet sich dann im Vollbild ohne Adressleiste. Unten rechts startet **📷 Scannen** direkt die Kamera.
+
 ## Funktionen
 - **Rechnung scannen**: Foto, Kamera (am Handy/Tablet) oder PDF; mehrere Seiten möglich.
 - **Automatisches Auslesen** (deutsche Texterkennung): Betrag, Rechnungsdatum, Fälligkeit,
