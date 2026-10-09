@@ -1,0 +1,10 @@
+# Persönliche Daten nie ins Repository
+Arztrechnungen_Sicherung_*.json
+Arztrechnungen_*.csv
+*.pdf
+*.jpg
+*.jpeg
+*.png
+
+# Lokale Claude-Einstellungen
+.claude/settings.local.json
