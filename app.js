@@ -178,7 +178,7 @@
     renderSummary(list);
     const el = $('#list');
     if (!invoices.length) {
-      el.innerHTML = '<div class="empty">Noch keine Rechnungen erfasst.<br>Klicke auf <b>＋ Rechnung scannen</b>, um die erste Rechnung einzulesen.</div>';
+      el.innerHTML = '<div class="empty">Noch keine Rechnungen erfasst.<br><span class="desktop-only">Klicke auf <b>＋ Rechnung scannen</b>, um die erste Rechnung einzulesen.</span><span class="mobile-only">Tippe unten rechts auf <b>📷 Scannen</b>, um die erste Rechnung zu fotografieren.</span></div>';
       return;
     }
     if (!list.length) {
